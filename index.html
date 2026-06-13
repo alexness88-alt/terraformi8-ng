@@ -175,7 +175,7 @@ tr:nth-child(even) {
 </head>
 
 <body>
-
+    
 <h1>Terraforming Mars</h1>
 
 <div class="filter-container">
@@ -785,6 +785,11 @@ function buildChart(id, data, colorMap = {}, useAvatarPlugin = false) {
     const dataset = data.slice(0, 5);
     dataset.sort((a, b) => a.name.localeCompare(b.name, "no"))
 
+    console.log(
+        document.getElementById(id).width,
+        document.getElementById(id).height
+    );
+
     return new Chart(el, {
         type: "bar",
         plugins: useAvatarPlugin ? [avatarPlugin] : [],
@@ -804,6 +809,13 @@ function buildChart(id, data, colorMap = {}, useAvatarPlugin = false) {
             animation: {
                 duration: 1800,
                 easing: "easeOutQuart"
+            },
+            transitions: {
+                resize: {
+                    animation: {
+                        duration: 1000
+                    }
+                }
             },
             plugins: {
                 legend: {
