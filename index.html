@@ -89,31 +89,39 @@ tr:nth-child(even) {
     flex-wrap: wrap;
 }
 
-.button-row button {
+.primary-btn {
     border: none;
     padding: 12px 18px;
     border-radius: 10px;
     cursor: pointer;
     font-weight: bold;
-}
-
-.button-row button:first-child {
-    background: #2563eb;
+    background: #ff4f18; 
     color: white;
 }
 
-.button-row .secondary {
+.secondary-btn {
+    border: none;
+    padding: 12px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
     background: #e5e7eb;
+}
+
+.icon-btn {
+    border: none;
+    padding: 6px 6px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 20px;
+    background: transparent;
 }
 
 #entryTable input {
     width: 100%;
     box-sizing: border-box;
     padding: 8px;
-}
-
-.secondary {
-    background: #ddd;
 }
 
 #yearFilter {
@@ -153,14 +161,14 @@ tr:nth-child(even) {
 }
 
 .select-wrapper::after {
-    content: "⌄";
+    content: "▼";
     position: absolute;
     right: 14px;
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
     color: #666;
-    font-size: 18px;
+    font-size: 14px;
 }
 
 .empty-state {
@@ -179,7 +187,6 @@ tr:nth-child(even) {
 <h1>Terraforming Mars</h1>
 
 <div class="filter-container">
-    <label for="yearFilter">📅 År</label>
     <div class="select-wrapper">
         <select id="yearFilter"></select>
     </div>
@@ -239,9 +246,11 @@ tr:nth-child(even) {
     </table>
 
     <div class="button-row">
-        <button type="button" onclick="addPlayerRow()">Legg til spiller</button>
-        <button type="button" onclick="addGame()">Lagre spill</button>
-        <button type="button" class="secondary" onclick="resetData()">Nullstill data</button>
+        <div class="button-row">
+            <button type="button" class="primary-btn" onclick="addGame()">Lagre spill</button>
+            <button type="button" class="secondary-btn" onclick="addPlayerRow()">➕ Legg til spiller</button>
+        </div>
+        <button type="button" style="margin-left: auto;" class="secondary-btn" onclick="resetData()">Nullstill mellomlagret data</button>
     </div>
 </div>
 
@@ -297,7 +306,7 @@ dato,spiller,corporation,poeng
 2025-11-23 12:00;Anton;Factorum;81
 2025-12-27 12:00;Alexander;Manutech;81
 2025-12-27 12:00;Nhat;Helios;77
-2025-12-27 12:00;Andrea;Mining Guild;57
+2025-12-27 12:00;Andrej;Mining Guild;57
 2025-12-27 12:00;Johannes;Philares;46
 2026-01-11 12:00;Paul;Aphrodite;100
 2026-01-11 12:00;Alexander;Manutech;90
@@ -332,14 +341,12 @@ dato,spiller,corporation,poeng
 </script>
 
 <script>
-// -------------------- SETTINGS --------------------
-const PRIOR_GAMES = 10;
-const PRIOR_RATING = 50;
-
-let rankingChartInstance = null;
-let corpChartInstance = null;
-
 // -------------------- HELPERS --------------------
+console.log(
+    "window width:", window.innerWidth
+);
+const isSmallScreen = window.innerWidth < 800;
+
 function parseDate(value) {
     if (!value) return null;
     return new Date(String(value).replace(" ", "T"));
@@ -355,6 +362,9 @@ function formatTimestampForStorage(value) {
 }
 
 // -------------------- LOAD --------------------
+let rankingChartInstance = null;
+let corpChartInstance = null;
+
 function loadGames() {
     try {
         const local = localStorage.getItem("games");
@@ -404,6 +414,7 @@ function loadGames() {
 let allGames = loadGames();
 let filteredGames = [...allGames];
 
+
 // -------------------- FILTER --------------------
 function setupYearFilter() {
     const select = document.getElementById("yearFilter");
@@ -418,7 +429,7 @@ function setupYearFilter() {
     )].sort((a, b) => a - b);
 
     select.innerHTML =
-        '<option value="all">Alle år</option>' +
+        '<option value="all">Totalt</option>' +
         years.map(y => `<option value="${y}">${y}</option>`).join("");
 
     const selected = localStorage.getItem("selectedYear") || "all";
@@ -440,88 +451,6 @@ function setupYearFilter() {
 
 setupYearFilter();
 
-// -------------------- SAVE --------------------
-function saveGames() {
-    localStorage.setItem("games", JSON.stringify(allGames));
-}
-
-// -------------------- ADD GAME --------------------
-function addPlayerRow(player = "", corp = "", points = "") {
-    const row = document.createElement("tr");
-
-    row.innerHTML = `
-        <td>
-            <input class="player" value="${player}">
-        </td>
-        <td>
-            <input class="corp" value="${corp}">
-        </td>
-        <td>
-            <input class="points" type="number" step="0.1" value="${points}">
-        </td>
-        <td>
-            <button type="button" onclick="this.closest('tr').remove()">❌</button>
-        </td>
-    `;
-
-    document.getElementById("entryBody").appendChild(row);
-}
-
-function addGame() {
-    const timestamp = formatTimestampForStorage(
-        document.getElementById("timestamp").value
-    );
-
-    if (!timestamp) {
-        alert("Velg dato/tid");
-        return;
-    }
-
-    const rows = document.querySelectorAll("#entryBody tr");
-    const game = [];
-
-    rows.forEach(row => {
-        const player = row.querySelector(".player").value.trim();
-        const corporation = row.querySelector(".corp").value.trim();
-        const pointsRaw = row.querySelector(".points").value.trim();
-        const points = parsePoints(pointsRaw);
-
-        if (!player || !corporation || pointsRaw === "" || Number.isNaN(points)) {
-            return;
-        }
-
-        game.push({
-            player,
-            corporation,
-            points,
-            timestamp
-        });
-    });
-
-    if (game.length < 2) {
-        alert("Minst to spillere må registreres");
-        return;
-    }
-
-    allGames.push(game);
-    saveGames();
-    location.reload();
-}
-
-for (let i = 0; i < 4; i++) {
-    addPlayerRow();
-}
-
-// -------------------- RESET --------------------
-function resetData() {
-    if (!confirm("Er du sikker? Alle lokalt lagrede spill slettes.")) {
-        return;
-    }
-
-    localStorage.removeItem("games");
-    localStorage.removeItem("selectedYear");
-    location.reload();
-}
 
 // -------------------- SORT GAMES --------------------
 filteredGames.sort((a, b) => {
@@ -529,6 +458,7 @@ filteredGames.sort((a, b) => {
     const db = parseDate(b?.[0]?.timestamp);
     return da - db;
 });
+
 
 // -------------------- STATS --------------------
 const playerStats = {};
@@ -560,6 +490,7 @@ function processGames() {
 }
 
 processGames();
+
 
 // -------------------- STREAKS --------------------
 function buildPlayerStreaks(games) {
@@ -627,10 +558,14 @@ function buildCorporationStreaks(games) {
 const playerStreaks = buildPlayerStreaks(filteredGames);
 const corpStreaks = buildCorporationStreaks(filteredGames);
 
+
 // -------------------- RANKING --------------------
 function calculateRank(stats, streaks) {
     const out = [];
-
+    const PRIOR_RATING = 50;
+    const PRIOR_GAMES = Math.max(3,Math.round(filteredGames.length * 0.5));
+    console.log("Bayanesian prior games:", PRIOR_GAMES);
+    
     Object.entries(stats).forEach(([name, d]) => {
         if (!d.perf.length) return;
 
@@ -654,6 +589,7 @@ function calculateRank(stats, streaks) {
 const players = calculateRank(playerStats, playerStreaks);
 const corps = calculateRank(corpStats, corpStreaks);
 
+
 // -------------------- CHART COLORS --------------------
 const playerColors = {
     "Alexander": "#59a14f",
@@ -674,6 +610,7 @@ const fallbackColors = [
     "#f28e2b",
     "#edc948"
 ];
+
 
 // -------------------- AVATARS --------------------
 const avatars = {};
@@ -747,6 +684,7 @@ const avatarPlugin = {
     }
 };
 
+
 // -------------------- CONFETTI --------------------
 function celebrateTopBar(chart) {
     const meta = chart.getDatasetMeta(0);
@@ -777,6 +715,7 @@ function celebrateTopBar(chart) {
     });
 }
 
+
 // -------------------- BUILD CHART --------------------
 function buildChart(id, data, colorMap = {}, useAvatarPlugin = false) {
     const el = document.getElementById(id);
@@ -786,15 +725,19 @@ function buildChart(id, data, colorMap = {}, useAvatarPlugin = false) {
     dataset.sort((a, b) => a.name.localeCompare(b.name, "no"))
 
     console.log(
-        document.getElementById(id).width,
-        document.getElementById(id).height
+        id, "width:", document.getElementById(id).width, "height:", document.getElementById(id).height
     );
 
     return new Chart(el, {
         type: "bar",
         plugins: useAvatarPlugin ? [avatarPlugin] : [],
         data: {
-            labels: dataset.map(x => x.name),
+//            labels: dataset.map(x => x.name),
+            labels: dataset.map(x => {
+                if (!isSmallScreen) {return x.name;}
+                if (x.name.length > 10) {return x.name.substring(0, 10) + "...";}
+                return x.name;
+            }),
             datasets: [{
                 label: "Bayesian Rating",
                 data: dataset.map(x => Number(x.rating.toFixed(1))),
@@ -871,6 +814,105 @@ function buildTable(id, data) {
 
 buildTable("statsTable", players);
 buildTable("corpTable", corps);
+
+
+// -------------------- ADD GAME --------------------
+function addPlayerRow(player = "", corp = "", points = "") {
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+        <td>
+            <input class="player" value="${player}">
+        </td>
+        <td>
+            <input class="corp" value="${corp}">
+        </td>
+        <td>
+            <input class="points" type="number" step="0.1" value="${points}">
+        </td>
+        <td>
+            <button type="button" class="icon-btn" onclick="this.closest('tr').remove()">❌</button>
+        </td>
+    `;
+
+    document.getElementById("entryBody").appendChild(row);
+}
+
+function addGame() {
+    const timestamp = formatTimestampForStorage(
+        document.getElementById("timestamp").value
+    );
+
+    if (!timestamp) {
+        alert("Velg dato/tid");
+        return;
+    }
+
+    const rows = document.querySelectorAll("#entryBody tr");
+    const game = [];
+
+    rows.forEach(row => {
+        const player = row.querySelector(".player").value.trim();
+        const corporation = row.querySelector(".corp").value.trim();
+        const pointsRaw = row.querySelector(".points").value.trim();
+        const points = parsePoints(pointsRaw);
+
+        if (!player || !corporation || pointsRaw === "" || Number.isNaN(points)) {
+            return;
+        }
+
+        game.push({
+            player,
+            corporation,
+            points,
+            timestamp
+        });
+    });
+
+    if (game.length < 2) {
+        alert("Minst to spillere må registreres");
+        return;
+    }
+
+    allGames.push(game);
+    saveGames();
+    location.reload();
+}
+
+
+// Prefill data
+const now = new Date();
+now.setMinutes(
+    now.getMinutes() - now.getTimezoneOffset()
+);
+
+document.getElementById("timestamp").value =
+    now.toISOString().slice(0, 16);
+
+
+addPlayerRow("Alexander");
+addPlayerRow("Nhat");
+addPlayerRow("Paul");
+addPlayerRow("Anton");
+
+
+// -------------------- SAVE --------------------
+function saveGames() {
+    localStorage.setItem("games", JSON.stringify(allGames));
+}
+
+
+// -------------------- RESET --------------------
+function resetData() {
+    if (!confirm("Er du sikker? Alle lokalt lagrede spill slettes.")) {
+        return;
+    }
+
+    localStorage.removeItem("games");
+    localStorage.removeItem("selectedYear");
+    location.reload();
+}
+
 </script>
 
 </body>
