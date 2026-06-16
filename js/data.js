@@ -14,10 +14,10 @@ function formatTimestampForStorage(value) {
 }
 
 // -------------------- LOAD --------------------
-async function loadCsvData() {
-    const response = await fetch("data/games.csv");
-    return await response.text();
-}
+// async function loadCsvData() {
+//     const response = await fetch("data/games.csv");
+//     return await response.text();
+// }
 
 let rankingChartInstance = null;
 let corpChartInstance = null;
