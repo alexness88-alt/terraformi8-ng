@@ -83,6 +83,7 @@ tr:nth-child(even) {
     border-radius: 10px;
     cursor: pointer;
     font-weight: bold;
+    font-size: 14px;
     background: #ff4f18; 
     color: white;
 }
@@ -93,6 +94,7 @@ tr:nth-child(even) {
     border-radius: 10px;
     cursor: pointer;
     font-weight: bold;
+    font-size: 14px;
     background: #e5e7eb;
 }
 

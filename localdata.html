@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <title>Mellomlagrede spill</title>
+    <link rel="icon" href="images\mars.png" type="image/x-icon">
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+
+        th {
+            background: #222;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Mellomlagrede spill</h1>
+
+<p>
+    <a href="index.html">← Tilbake</a>
+</p>
+
+<table id="localTable">
+    <thead>
+        <tr>
+            <th>Dato</th>
+            <th>Spill</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+<div class="button-row">
+    <button type="button" style="margin-left: auto;" class="secondary-btn" onclick="resetData()">Nullstill mellomlagret data</button>
+</div>
+
+    <script src="js/data.js"></script>
+
+<script>
+
+const games = JSON.parse(localStorage.getItem("games") || "[]");
+
+const localGames = games.filter(game =>
+    game.some(player => player.source === "local")
+);
+
+localGames.sort((a, b) => {
+    return new Date(b[0].timestamp) - new Date(a[0].timestamp);
+});
+
+const tbody = document.querySelector("#localTable tbody");
+
+localGames.forEach(game => {
+
+    const tr = document.createElement("tr");
+
+    const timestamp = game[0].timestamp;
+
+    const gamedata = game
+        .map(p => `${p.player} (${p.points} - ${p.corporation})`)
+        .join(", ");
+
+    tr.innerHTML = `
+        <td>${timestamp}</td>
+        <td>${gamedata}</td>
+    `;
+
+    tbody.appendChild(tr);
+
+});
+
+</script>
+
+</body>
+</html>

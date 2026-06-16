@@ -61,7 +61,8 @@ function loadGames() {
             player,
             corporation,
             points,
-            timestamp
+            timestamp,
+            source: "server"
         });
     });
 
@@ -121,7 +122,8 @@ function addGame() {
             player,
             corporation,
             points,
-            timestamp
+            timestamp,
+            source: "local"
         });
     });
 
