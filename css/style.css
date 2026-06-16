@@ -1,0 +1,169 @@
+body {
+    font-family: Arial, sans-serif;
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 20px;
+    background: #f4f4f4;
+}
+
+h1, h2 {
+    text-align: center;
+}
+
+.chart-container {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.08);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 40px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.08);
+}
+
+th, td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+}
+
+th {
+    background: #222;
+    color: white;
+}
+
+tr:nth-child(even) {
+    background: #f8f8f8;
+}
+
+.game-entry-card {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.08);
+    margin-top: 30px;
+}
+
+.game-entry-card h3 {
+    margin-top: 0;
+}
+
+.game-entry-card input,
+.game-entry-card textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.game-entry-card textarea {
+    font-family: Consolas, monospace;
+    resize: vertical;
+}
+
+.button-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.primary-btn {
+    border: none;
+    padding: 12px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    background: #ff4f18; 
+    color: white;
+}
+
+.secondary-btn {
+    border: none;
+    padding: 12px 18px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    background: #e5e7eb;
+}
+
+.icon-btn {
+    border: none;
+    padding: 6px 6px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 20px;
+    background: transparent;
+}
+
+#entryTable input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px;
+}
+
+#yearFilter {
+    appearance: none;
+    background: white;
+    border: none;
+    padding: 12px 40px 12px 16px;
+    border-radius: 999px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.08);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s ease;
+}
+
+#yearFilter:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,.12);
+}
+
+#yearFilter:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+}
+
+.filter-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.select-wrapper {
+    position: relative;
+}
+
+.select-wrapper::after {
+    content: "▼";
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #666;
+    font-size: 14px;
+}
+
+.empty-state {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    color: #666;
+    margin-bottom: 30px;
+}
