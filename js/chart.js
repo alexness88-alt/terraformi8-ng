@@ -1,6 +1,3 @@
-console.log(
-    "window width:", window.innerWidth
-);
 const isSmallScreen = window.innerWidth < 800;
 
 // -------------------- CHART COLORS --------------------
@@ -129,23 +126,31 @@ function celebrateTopBar(chart) {
 }
 
 
+// -------------------- CHARTS --------------------
+function destroyCharts() {
+    if (rankingChartInstance) {
+        rankingChartInstance.destroy();
+        rankingChartInstance = null;
+    }
+
+    if (corpChartInstance) {
+        corpChartInstance.destroy();
+        corpChartInstance = null;
+    }
+}
+
 // -------------------- BUILD CHART --------------------
 function buildChart(id, data, colorMap = {}, useAvatarPlugin = false) {
-    const el = document.getElementById(id);
-    if (!el) return null;
+    const canvas = document.getElementById(id);
+    if (!canvas) return null;
 
     const dataset = data.slice(0, 5);
     dataset.sort((a, b) => a.name.localeCompare(b.name, "no"))
 
-    console.log(
-        id, "width:", document.getElementById(id).width, "height:", document.getElementById(id).height
-    );
-
-    return new Chart(el, {
+    return new Chart(canvas, {
         type: "bar",
         plugins: useAvatarPlugin ? [avatarPlugin] : [],
         data: {
-//            labels: dataset.map(x => x.name),
             labels: dataset.map(x => {
                 if (!isSmallScreen) {return x.name;}
                 if (x.name.length > 10) {return x.name.substring(0, 10) + "...";}
@@ -188,9 +193,14 @@ function buildChart(id, data, colorMap = {}, useAvatarPlugin = false) {
     });
 }
 
-rankingChartInstance = buildChart("rankingChart", players, playerColors, true);
-corpChartInstance = buildChart("corpChart", corps, {}, false);
+function renderCharts(players, corps) {
+    destroyCharts();
+    rankingChartInstance = buildChart("rankingChart", players, playerColors, true);
+    corpChartInstance = buildChart("corpChart", corps, {}, false);
 
-if (rankingChartInstance) {
-    setTimeout(() => celebrateTopBar(rankingChartInstance), 1200);
+    if (rankingChartInstance) {
+        setTimeout(() => celebrateTopBar(rankingChartInstance), 1200);
+    }
 }
+
+console.log("chart.js lastet");

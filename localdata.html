@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Mellomlagrede spill</title>
-    <link rel="icon" href="images\mars.png" type="image/x-icon">
+    <link rel="icon" href="images/mars.png" type="image/x-icon">
     <link rel="stylesheet" href="css/style.css">
 
     <style>
@@ -48,43 +48,68 @@
     <tbody></tbody>
 </table>
 <div class="button-row">
-    <button type="button" style="margin-left: auto;" class="secondary-btn" onclick="resetData()">Nullstill mellomlagret data</button>
+    <button type="button" style="margin-left: auto;" class="secondary-btn" onclick="resetData(); renderLocalGamesTable();">Nullstill mellomlagret data</button>
 </div>
 
     <script src="js/data.js"></script>
 
 <script>
+    function renderLocalGamesTable() {
+        const storedLocalGames = JSON.parse(
+            localStorage.getItem("tm_local_games") || "[]"
+        );
 
-const games = JSON.parse(localStorage.getItem("games") || "[]");
+        storedLocalGames.sort((a, b) => {
+            const da = new Date(a?.[0]?.timestamp || 0);
+            const db = new Date(b?.[0]?.timestamp || 0);
+            return db - da;
+        });
 
-const localGames = games.filter(game =>
-    game.some(player => player.source === "local")
-);
+        const tbody = document.querySelector("#localTable tbody");
+        tbody.innerHTML = "";
 
-localGames.sort((a, b) => {
-    return new Date(b[0].timestamp) - new Date(a[0].timestamp);
-});
+        if (!storedLocalGames.length) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="2" class="empty-message">
+                        Ingen mellomlagrede spill funnet.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
 
-const tbody = document.querySelector("#localTable tbody");
+        storedLocalGames.forEach(game => {
+            const tr = document.createElement("tr");
 
-localGames.forEach(game => {
+            const timestamp = game?.[0]?.timestamp || "";
 
-    const tr = document.createElement("tr");
+            const gameData = game
+                .map(p => `${p.player} (${p.points} - ${p.corporation})`)
+                .join(", ");
 
-    const timestamp = game[0].timestamp;
+            tr.innerHTML = `
+                <td>${timestamp}</td>
+                <td>${gameData}</td>
+            `;
 
-    const gamedata = game
-        .map(p => `${p.player} (${p.points} - ${p.corporation})`)
-        .join(", ");
+            tbody.appendChild(tr);
+        });
+    }
 
-    tr.innerHTML = `
-        <td>${timestamp}</td>
-        <td>${gamedata}</td>
-    `;
+    function resetLocalDataAndRefresh() {
+        if (!confirm("Er du sikker? Alle lokalt lagrede spill slettes.")) {
+            return;
+        }
 
-    tbody.appendChild(tr);
 
-});
+    localStorage.removeItem("tm_local_games");
+    localStorage.removeItem("selectedYear");
+
+    renderLocalGamesTable();
+}
+
+renderLocalGamesTable();
 
 </script>
 

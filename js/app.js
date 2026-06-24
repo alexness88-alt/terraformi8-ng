@@ -1,49 +1,60 @@
-// -------------------- FILTER --------------------
-function setupYearFilter() {
-    const select = document.getElementById("yearFilter");
+// -------------------- APP STATE --------------------
 
-    const years = [...new Set(
-        allGames
+let players = [];
+let corps = [];
+
+// -------------------- FILTER --------------------
+
+function getAvailableYears(games) {
+    return [...new Set(
+        games
             .map(g => g?.[0]?.timestamp)
             .filter(Boolean)
             .map(ts => parseDate(ts))
             .filter(d => d instanceof Date && !Number.isNaN(d.getTime()))
             .map(d => d.getFullYear())
     )].sort((a, b) => a - b);
+}
+
+function setupYearFilter() {
+    const select = document.getElementById("yearFilter");
+    if (!select) return;
+
+    const years = getAvailableYears(allGames);
 
     select.innerHTML =
         '<option value="all">Totalt</option>' +
         years.map(y => `<option value="${y}">${y}</option>`).join("");
 
-    const selected = localStorage.getItem("selectedYear") || "all";
-    select.value = years.includes(Number(selected)) || selected === "all" ? selected : "all";
+    const selected = localStorage.getItem(SELECTED_YEAR_KEY) || "all";
+    select.value =
+        selected === "all" || years.includes(Number(selected))
+            ? selected
+            : "all";
 
-    filteredGames = select.value === "all"
-        ? [...allGames]
-        : allGames.filter(g => {
-            const d = parseDate(g?.[0]?.timestamp);
-            if (!d || Number.isNaN(d.getTime())) return false;
-            return d.getFullYear().toString() === select.value;
-        });
-
-    select.addEventListener("change", () => {
-        localStorage.setItem("selectedYear", select.value);
-        location.reload();
-    });
+    select.onchange = () => {
+        localStorage.setItem(SELECTED_YEAR_KEY, select.value);
+        applyYearFilter();
+        renderApp();
+    };
 }
 
-setupYearFilter();
+function applyYearFilter() {
+    const select = document.getElementById("yearFilter");
+    const selectedYear = select?.value || "all";
 
+    filteredGames = selectedYear === "all"
+        ? [...allGames]
+        : allGames.filter(game => {
+            const d = parseDate(game?.[0]?.timestamp);
+            return d && String(d.getFullYear()) === selectedYear;
+        });
 
-// -------------------- SORT GAMES --------------------
-filteredGames.sort((a, b) => {
-    const da = parseDate(a?.[0]?.timestamp);
-    const db = parseDate(b?.[0]?.timestamp);
-    return da - db;
-});
+    filteredGames = sortGamesByTimestamp(filteredGames);
+}
 
+// -------------------- TABLES --------------------
 
-// -------------------- BUILD TABLES --------------------
 function buildTable(id, data) {
     const tbody = document.querySelector(`#${id} tbody`);
     if (!tbody) return;
@@ -51,11 +62,11 @@ function buildTable(id, data) {
     tbody.innerHTML = "";
 
     if (!data.length) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td colspan="5" style="color:#666;">Ingen data for valgt filter</td>
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" style="color:#666;">Ingen data for valgt filter</td>
+            </tr>
         `;
-        tbody.appendChild(tr);
         return;
     }
 
@@ -72,5 +83,68 @@ function buildTable(id, data) {
     });
 }
 
-buildTable("statsTable", players);
-buildTable("corpTable", corps);
+// -------------------- RENDER --------------------
+
+function renderApp() {
+    const ranking = buildRankings(filteredGames);
+    players = ranking.players;
+    corps = ranking.corps;
+
+    buildTable("statsTable", players);
+    buildTable("corpTable", corps);
+    renderCharts(players, corps);
+}
+
+function refreshApp() {
+    rebuildAllGames();
+
+    const years = getAvailableYears(allGames);
+    const selected = localStorage.getItem(SELECTED_YEAR_KEY) || "all";
+
+    if (selected !== "all" && !years.includes(Number(selected))) {
+        localStorage.setItem(SELECTED_YEAR_KEY, "all");
+    }
+
+    setupYearFilter();
+    applyYearFilter();
+    updateCorporationSuggestions();
+    renderApp();
+}
+
+// -------------------- INIT --------------------
+
+async function initApp() {
+    try {
+        await loadAllGames();
+        setupEntryForm();
+        setupYearFilter();
+        applyYearFilter();
+        updateCorporationSuggestions();
+        renderApp();
+    } catch (error) {
+        console.error("Feil ved initialisering av appen:", error);
+
+        const statsBody = document.querySelector("#statsTable tbody");
+        const corpBody = document.querySelector("#corpTable tbody");
+
+        if (statsBody) {
+            statsBody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="color:red;">Kunne ikke laste data.</td>
+                </tr>
+            `;
+        }
+
+        if (corpBody) {
+            corpBody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="color:red;">Kunne ikke laste data.</td>
+                </tr>
+            `;
+        }
+    }
+}
+
+initApp();
+
+console.log("app.js lastet");

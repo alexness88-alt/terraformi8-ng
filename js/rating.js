@@ -1,9 +1,10 @@
 // -------------------- STATS --------------------
-const playerStats = {};
-const corpStats = {};
 
-function processGames() {
-    filteredGames.forEach(game => {
+function processGames(games) {
+    const playerStats = {};
+    const corpStats = {};
+
+    games.forEach(game => {
         const sortedGame = [...game].sort((a, b) => b.points - a.points);
         const n = sortedGame.length;
 
@@ -25,11 +26,13 @@ function processGames() {
             if (i === 0) corpStats[p.corporation].wins++;
         });
     });
+
+    console.log("games processed");
+    return { playerStats, corpStats };
 }
 
-processGames();
-
 // -------------------- STREAKS --------------------
+
 function buildPlayerStreaks(games) {
     const streaks = {};
     const players = new Set();
@@ -47,8 +50,7 @@ function buildPlayerStreaks(games) {
 
             if (!participant) continue;
 
-            const winner = sortedGame[0]?.player;
-            if (winner === player) {
+            if (sortedGame[0]?.player === player) {
                 streak++;
             } else {
                 break;
@@ -58,6 +60,7 @@ function buildPlayerStreaks(games) {
         streaks[player] = streak;
     });
 
+    console.log("player streak stats built");
     return streaks;
 }
 
@@ -78,43 +81,39 @@ function buildCorporationStreaks(games) {
 
             if (!participant) continue;
 
-            const winnerCorp = sortedGame[0]?.corporation;
-            if (winnerCorp === corp) {
+            if (sortedGame[0]?.corporation === corp) {
                 streak++;
             } else {
                 break;
             }
         }
 
+        console.log("corp streak stats built");
         streaks[corp] = streak;
     });
 
     return streaks;
 }
 
-const playerStreaks = buildPlayerStreaks(filteredGames);
-const corpStreaks = buildCorporationStreaks(filteredGames);
-
-
 // -------------------- RANKING --------------------
+
 function calculateRank(stats, streaks) {
     const out = [];
     const PRIOR_RATING = 50;
     const PRIOR_GAMES = 6;
-//    const PRIOR_GAMES = Math.max(3,Math.round(filteredGames.length * 0.5));
-    console.log("Bayanesian prior games:", PRIOR_GAMES);
-    console.log("Total games:", filteredGames.length);
-    
+
     Object.entries(stats).forEach(([name, d]) => {
         if (!d.perf.length) return;
 
         const avg = d.perf.reduce((a, b) => a + b, 0) / d.perf.length;
+
         const rating =
             (avg * d.perf.length + PRIOR_RATING * PRIOR_GAMES) /
             (d.perf.length + PRIOR_GAMES);
-        const uncertantyrating =
-            (avg * d.perf.length + PRIOR_RATING * (filteredGames.length - d.perf.length)) /
-            (filteredGames.length);
+    
+        // const uncertantyrating =
+        //     (avg * d.perf.length + PRIOR_RATING * (filteredGames.length - d.perf.length)) /
+        //     (filteredGames.length);
 
         out.push({
             name,
@@ -125,9 +124,20 @@ function calculateRank(stats, streaks) {
         });
     });
 
+    console.log("calculated ranking");
     return out.sort((a, b) => b.rating - a.rating);
 }
 
-const players = calculateRank(playerStats, playerStreaks);
-const corps = calculateRank(corpStats, corpStreaks);
+function buildRankings(games) {
+    const { playerStats, corpStats } = processGames(games);
 
+    const playerStreaks = buildPlayerStreaks(games);
+    const corpStreaks = buildCorporationStreaks(games);
+
+    return {
+        players: calculateRank(playerStats, playerStreaks),
+        corps: calculateRank(corpStats, corpStreaks)
+    };
+}
+
+console.log("rating.js lastet");
