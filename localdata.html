@@ -48,6 +48,7 @@
     <tbody></tbody>
 </table>
 <div class="button-row">
+    <button type="button" class="primary-btn" id="copyGamesBtn">Kopier spill</button>
     <button type="button" style="margin-left: auto;" class="secondary-btn" onclick="resetData(); renderLocalGamesTable();">Nullstill mellomlagret data</button>
 </div>
 
@@ -102,14 +103,34 @@
             return;
         }
 
+        localStorage.removeItem("tm_local_games");
+        localStorage.removeItem("selectedYear");
 
-    localStorage.removeItem("tm_local_games");
-    localStorage.removeItem("selectedYear");
+        renderLocalGamesTable();
+    }
 
     renderLocalGamesTable();
-}
 
-renderLocalGamesTable();
+    async function copyGames() {
+        try {
+            const storedLocalGames = JSON.parse(localStorage.getItem("tm_local_games")) || [];
+            const clipboardText = storedLocalGames[0]
+                .map(localGame =>
+                    `${localGame.timestamp};${localGame.player};${localGame.corporation};${localGame.points}`
+                )
+                .join("\n");
+
+            await navigator.clipboard.writeText(clipboardText);
+
+            alert("Spillene er kopiert til utklippstavlen.");
+        } catch (err) {
+            console.error(err);
+            alert("Kunne ikke kopiere spillene.");
+        }
+    }
+
+    document.getElementById("copyGamesBtn").addEventListener("click", copyGames);
+
 
 </script>
 
