@@ -5,30 +5,6 @@
     <title>Mellomlagrede spill</title>
     <link rel="icon" href="images/mars.png" type="image/x-icon">
     <link rel="stylesheet" href="css/style.css">
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 1200px;
-            margin: 30px auto;
-            padding: 20px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-        }
-
-        th {
-            background: #222;
-            color: white;
-        }
-    </style>
 </head>
 <body>
 
@@ -47,90 +23,49 @@
     </thead>
     <tbody></tbody>
 </table>
+
 <div class="button-row">
-    <button type="button" class="primary-btn" id="copyGamesBtn">Kopier spill</button>
-    <button type="button" style="margin-left: auto;" class="secondary-btn" onclick="resetData(); renderLocalGamesTable();">Nullstill mellomlagret data</button>
+    <button type="button" class="primary-btn" onclick="copyLocalData();">Kopier spill</button>
+    <button type="button" class="secondary-btn" onclick="resetLocalData();">Nullstill mellomlagret data</button>
+    <!-- <button type="button" style="margin-left: auto;" class="secondary-btn" onclick="resetLocalData(); renderPage();">Nullstill mellomlagret data</button> -->
 </div>
 
+    <script src="js/rating.js"></script>
     <script src="js/data.js"></script>
+    <script src="js/tables.js"></script>
 
 <script>
-    function renderLocalGamesTable() {
-        const storedLocalGames = JSON.parse(
-            localStorage.getItem("tm_local_games") || "[]"
-        );
 
-        storedLocalGames.sort((a, b) => {
-            const da = new Date(a?.[0]?.timestamp || 0);
-            const db = new Date(b?.[0]?.timestamp || 0);
-            return db - da;
-        });
+// -------------------- RENDER --------------------
 
-        const tbody = document.querySelector("#localTable tbody");
-        tbody.innerHTML = "";
+function renderPage() {
+    buildList("localTable",localGames);
+}
 
-        if (!storedLocalGames.length) {
-            tbody.innerHTML = `
+
+// -------------------- INIT --------------------
+
+async function initPage() {
+    try {
+        localGames = loadLocalGames();
+        localGames = sortGamesByTimestamp(localGames);
+        renderPage();
+    } catch (error) {
+        console.error("Feil ved initialisering av siden:", error);
+
+        const localGamesBody = document.querySelector("#localTable tbody");
+
+        if (localGamesBody) {
+            localGamesBody.innerHTML = `
                 <tr>
-                    <td colspan="2" class="empty-message">
-                        Ingen mellomlagrede spill funnet.
-                    </td>
+                    <td colspan="5" style="color:red;">Kunne ikke laste data.</td>
                 </tr>
             `;
-            return;
-        }
-
-        storedLocalGames.forEach(game => {
-            const tr = document.createElement("tr");
-
-            const timestamp = game?.[0]?.timestamp || "";
-
-            const gameData = game
-                .map(p => `${p.player} (${p.points} - ${p.corporation})`)
-                .join(", ");
-
-            tr.innerHTML = `
-                <td>${timestamp}</td>
-                <td>${gameData}</td>
-            `;
-
-            tbody.appendChild(tr);
-        });
-    }
-
-    function resetLocalDataAndRefresh() {
-        if (!confirm("Er du sikker? Alle lokalt lagrede spill slettes.")) {
-            return;
-        }
-
-        localStorage.removeItem("tm_local_games");
-        localStorage.removeItem("selectedYear");
-
-        renderLocalGamesTable();
-    }
-
-    renderLocalGamesTable();
-
-    async function copyGames() {
-        try {
-            const storedLocalGames = JSON.parse(localStorage.getItem("tm_local_games")) || [];
-            const clipboardText = storedLocalGames[0]
-                .map(localGame =>
-                    `${localGame.timestamp};${localGame.player};${localGame.corporation};${localGame.points}`
-                )
-                .join("\n");
-
-            await navigator.clipboard.writeText(clipboardText);
-
-            alert("Spillene er kopiert til utklippstavlen.");
-        } catch (err) {
-            console.error(err);
-            alert("Kunne ikke kopiere spillene.");
         }
     }
+}
 
-    document.getElementById("copyGamesBtn").addEventListener("click", copyGames);
-
+initPage();
 
 </script>
 

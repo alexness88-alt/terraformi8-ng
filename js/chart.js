@@ -1,4 +1,10 @@
+// -------------------- VARIABLES --------------------
+
+let rankingChartInstance = null;
+let corpChartInstance = null;
+
 const isSmallScreen = window.innerWidth < 800;
+
 
 // -------------------- CHART COLORS --------------------
 const playerColors = {
@@ -46,6 +52,7 @@ function getAvatar(player) {
 
         img.src = `images/${player.toLowerCase()}.png`;
         avatars[player] = img;
+    console.log(`Avatar returned for ${player}`);
     }
 
     return avatars[player];
@@ -91,7 +98,10 @@ const avatarPlugin = {
 
             ctx.restore();
         });
+        
+    console.log(`Drawing avatar`);
     }
+    
 };
 
 
@@ -123,10 +133,11 @@ function celebrateTopBar(chart) {
         startVelocity: 60,
         origin: { x, y }
     });
+    console.log(`Confetti shot`);
 }
 
 
-// -------------------- CHARTS --------------------
+// -------------------- BUILD CHART --------------------
 function destroyCharts() {
     if (rankingChartInstance) {
         rankingChartInstance.destroy();
@@ -137,9 +148,9 @@ function destroyCharts() {
         corpChartInstance.destroy();
         corpChartInstance = null;
     }
+    console.log(`Charts destroyed`);
 }
 
-// -------------------- BUILD CHART --------------------
 function buildChart(id, data, colorMap = {}, useAvatarPlugin = false) {
     const canvas = document.getElementById(id);
     if (!canvas) return null;
@@ -147,6 +158,7 @@ function buildChart(id, data, colorMap = {}, useAvatarPlugin = false) {
     const dataset = data.slice(0, 5);
     dataset.sort((a, b) => a.name.localeCompare(b.name, "no"))
 
+    console.log(`${id} built`);
     return new Chart(canvas, {
         type: "bar",
         plugins: useAvatarPlugin ? [avatarPlugin] : [],
@@ -192,15 +204,3 @@ function buildChart(id, data, colorMap = {}, useAvatarPlugin = false) {
         }
     });
 }
-
-function renderCharts(players, corps) {
-    destroyCharts();
-    rankingChartInstance = buildChart("rankingChart", players, playerColors, true);
-    corpChartInstance = buildChart("corpChart", corps, {}, false);
-
-    if (rankingChartInstance) {
-        setTimeout(() => celebrateTopBar(rankingChartInstance), 1200);
-    }
-}
-
-console.log("chart.js lastet");

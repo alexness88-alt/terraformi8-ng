@@ -1,4 +1,4 @@
-// -------------------- DATA / HELPERS --------------------
+// -------------------- VARIABLES --------------------
 
 const LOCAL_GAMES_KEY = "tm_local_games";
 const SELECTED_YEAR_KEY = "selectedYear";
@@ -8,26 +8,22 @@ let localGames = [];
 let allGames = [];
 let filteredGames = [];
 
-let rankingChartInstance = null;
-let corpChartInstance = null;
-
 function parseDate(value) {
     if (!value) return null;
 
     const d = new Date(String(value).replace(" ", "T"));
+    // console.log(`Date parsed: ${Number.isNaN(d.getTime()) ? null : d}`); 
     return Number.isNaN(d.getTime()) ? null : d;
 }
 
 function parsePoints(value) {
     if (value === null || value === undefined) return NaN;
+    // console.log(`Points parsed: ${Number(String(value).trim().replace(",", "."))}`); 
     return Number(String(value).trim().replace(",", "."));
 }
 
-function formatTimestampForStorage(value) {
-    return String(value || "").trim();
-}
-
 function sortGamesByTimestamp(games) {
+    console.log(`Games sorted by timestamp`); 
     return [...games].sort((a, b) => {
         const da = parseDate(a?.[0]?.timestamp);
         const db = parseDate(b?.[0]?.timestamp);
@@ -40,8 +36,8 @@ function sortGamesByTimestamp(games) {
     });
 }
 
-// -------------------- CSV --------------------
-
+// -------------------- LOAD GAMES --------------------
+// ------- Parse csv -------
 async function loadCsvData() {
     const response = await fetch("data/games.csv");
 
@@ -50,6 +46,7 @@ async function loadCsvData() {
     }
 
     const csvText = await response.text();
+    console.log(`CSV loaded`);
     return csvText.trim();
 }
 
@@ -87,17 +84,19 @@ function parseCsvToGames(csvText) {
         });
     });
 
-    return sortGamesByTimestamp(Object.values(gamesByTimestamp));
+    console.log(`CSV parsed`);
+    return Object.values(gamesByTimestamp);
 }
 
-// -------------------- LOCAL STORAGE --------------------
 
+// ------- Parse local storage -------
 function loadLocalGames() {
     try {
         const raw = localStorage.getItem(LOCAL_GAMES_KEY);
         if (!raw) return [];
 
         const parsed = JSON.parse(raw);
+        console.log(`Local games loaded`);
         return Array.isArray(parsed) ? parsed : [];
     } catch (error) {
         console.warn("Kunne ikke lese lokale spill fra localStorage.", error);
@@ -105,25 +104,21 @@ function loadLocalGames() {
     }
 }
 
-function saveLocalGames() {
-    localStorage.setItem(LOCAL_GAMES_KEY, JSON.stringify(localGames));
-}
 
-function rebuildAllGames() {
-    allGames = sortGamesByTimestamp([...baseGames, ...localGames]);
-}
-
+// ------- Load games -------
 async function loadAllGames() {
     const csvText = await loadCsvData();
     baseGames = parseCsvToGames(csvText);
     localGames = loadLocalGames();
-    rebuildAllGames();
-    filteredGames = [...allGames];
+    allGames = sortGamesByTimestamp([...baseGames, ...localGames]);
+    console.log(`Games loaded`);
 }
+
 
 // -------------------- ENTRY FORM --------------------
 
 function getAllCorporations(games) {
+    console.log(`Listed all corporations`);
     return [...new Set(
         games.flatMap(game =>
             game.map(player => player.corporation).filter(Boolean)
@@ -140,6 +135,28 @@ function updateCorporationSuggestions() {
     datalist.innerHTML = corporations
         .map(corp => `<option value="${corp}"></option>`)
         .join("");
+    console.log(`Created corporation suggestions list`);
+}
+
+function getAllPlayers(games) {
+    console.log(`Listed all players`);
+    return [...new Set(
+        games.flatMap(game =>
+            game.map(player => player.player).filter(Boolean)
+        )
+    )].sort((a, b) => a.localeCompare(b, "no"));
+}
+
+function updatePlayerSuggestions() {
+    const datalist = document.getElementById("playerSuggestions");
+    if (!datalist) return;
+
+    const players = getAllPlayers(allGames);
+
+    datalist.innerHTML = players
+        .map(player => `<option value="${player}"></option>`)
+        .join("");
+    console.log(`Created player suggestions list`);
 }
 
 function resetEntryForm() {
@@ -160,13 +177,14 @@ function resetEntryForm() {
         if (corpInput) corpInput.value = "";
         if (pointsInput) pointsInput.value = "";
     });
+    console.log(`Entry form resetted`);
 }
 
 function addPlayerRow(player = "", corp = "", points = "") {
     const row = document.createElement("tr");
 
     row.innerHTML = `
-        <td><input class="player" value="${player}"></td>
+        <td><input class="player" list="playerSuggestions" value="${player}"></td>
         <td><input class="corp" list="corporationSuggestions" value="${corp}"></td>
         <td><input class="points" type="number" step="0.1" value="${points}"></td>
         <td>
@@ -175,6 +193,7 @@ function addPlayerRow(player = "", corp = "", points = "") {
     `;
 
     document.getElementById("entryBody").appendChild(row);
+    console.log(`Player field added to entry form`);
 }
 
 function setupEntryForm() {
@@ -193,12 +212,16 @@ function setupEntryForm() {
         addPlayerRow("Paul");
         addPlayerRow("Anton");
     }
+    console.log(`Entry form setup complete`);
+}
+
+function saveLocalGames() {
+    localStorage.setItem(LOCAL_GAMES_KEY, JSON.stringify(localGames));
+    console.log(`Game saved to local storage`);
 }
 
 function addGame() {
-    const timestamp = formatTimestampForStorage(
-        document.getElementById("timestamp")?.value
-    );
+    const timestamp = String(document.getElementById("timestamp")?.value || "").trim();
 
     if (!timestamp) {
         alert("Velg dato/tid");
@@ -235,18 +258,19 @@ function addGame() {
     localGames.push(game);
     localGames = sortGamesByTimestamp(localGames);
     saveLocalGames();
-    rebuildAllGames();
-
-    if (typeof refreshApp === "function") {
-        refreshApp();
-    }
-
+    
+    // Refresh data and reset form
+    allGames = sortGamesByTimestamp([...baseGames, ...localGames]); 
+    renderPage();
     resetEntryForm();
 
-    alert("Spill lagret lokalt");
+    console.log(`Game added`);
 }
 
-function resetData() {
+
+// -------------------- RESET LOCAL DATA --------------------
+
+function resetLocalData() {
     if (!confirm("Er du sikker? Alle lokalt lagrede spill slettes.")) {
         return;
     }
@@ -254,12 +278,84 @@ function resetData() {
     localStorage.removeItem(LOCAL_GAMES_KEY);
     localStorage.removeItem(SELECTED_YEAR_KEY);
 
-    localGames = [];
-    rebuildAllGames();
+    localGames = []; 
+    console.log(`Local storage reset`);
+    renderPage();
+}
 
-    if (typeof refreshApp === "function") {
-        refreshApp();
+
+// -------------------- COPY LOCAL DATA --------------------
+
+async function copyLocalData() {
+    try {
+        const clipboardText = localGames
+            .map(gameSession =>
+                gameSession
+                    .map(game =>
+                        `${game.timestamp};${game.player};${game.corporation};${game.points}`
+                    )
+                    .join("\n")
+            )
+            .join("\n\n");
+
+        await navigator.clipboard.writeText(clipboardText);
+
+        alert("Spillene er kopiert til utklippstavlen.");
+    } catch (err) {
+        console.error(err);
+        alert("Kunne ikke kopiere spillene.");
     }
 }
 
-console.log("data.js lastet");
+
+// -------------------- FILTER --------------------
+
+function getAvailableYears(games) {
+    console.log(`Listed all years`);
+    return [...new Set(
+        games
+            .map(g => g?.[0]?.timestamp)
+            .filter(Boolean)
+            .map(ts => parseDate(ts))
+            .filter(d => d instanceof Date && !Number.isNaN(d.getTime()))
+            .map(d => d.getFullYear())
+    )].sort((a, b) => a - b);
+}
+
+function setupYearFilter() {
+    const select = document.getElementById("yearFilter");
+    if (!select) return;
+
+    const years = getAvailableYears(allGames);
+
+    select.innerHTML =
+        '<option value="all">Totalt</option>' +
+        years.map(y => `<option value="${y}">${y}</option>`).join("");
+
+    const selected = localStorage.getItem(SELECTED_YEAR_KEY) || "all";
+    select.value =
+        selected === "all" || years.includes(Number(selected))
+            ? selected
+            : "all";
+
+    select.onchange = () => {
+        localStorage.setItem(SELECTED_YEAR_KEY, select.value);
+        applyYearFilter();
+    };
+    console.log(`Filter setup complete`);
+}
+
+function applyYearFilter() {
+    const select = document.getElementById("yearFilter");
+    const selectedYear = select?.value || "all";
+
+    filteredGames = selectedYear === "all"
+        ? [...allGames]
+        : allGames.filter(game => {
+            const d = parseDate(game?.[0]?.timestamp);
+            return d && String(d.getFullYear()) === selectedYear;
+        });
+
+    renderPage();
+    console.log(`Games filtered by year`);
+}

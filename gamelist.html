@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <title>Alle spill</title>
+    <link rel="icon" href="images/mars.png" type="image/x-icon">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<h1>Alle spill</h1>
+
+    <div class="filter-container">
+        <div class="select-wrapper">
+            <select id="yearFilter"></select>
+        </div>
+    </div>
+
+<p>
+    <a href="index.html">← Tilbake</a>
+</p>
+
+<table id="gamesTable">
+    <thead>
+        <tr>
+            <th>Dato</th>
+            <th>Spill</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
+</table>
+
+    <script src="js/rating.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/tables.js"></script>
+
+<script>
+
+// -------------------- RENDER --------------------
+
+function renderPage() {
+    buildList("gamesTable",filteredGames);
+    console.log(`Page rendered`);
+}
+
+
+// -------------------- INIT --------------------
+
+async function initPage() {
+    try {
+        await loadAllGames();
+        setupYearFilter();
+        applyYearFilter();
+        renderPage();
+    } catch (error) {
+        console.error("Feil ved initialisering av siden:", error);
+
+        const localGamesBody = document.querySelector("#gamesTable tbody");
+
+        if (localGamesBody) {
+            localGamesBody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="color:red;">Kunne ikke laste data.</td>
+                </tr>
+            `;
+        }
+    }
+}
+
+initPage();
+
+
+</script>
+
+</body>
+</html>

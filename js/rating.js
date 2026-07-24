@@ -1,5 +1,20 @@
 // -------------------- STATS --------------------
 
+function calculateBayesianRating(playerCount, position) {
+    if (playerCount === 1) {
+        return 100;
+    }
+
+    const expansion = (playerCount - 2) * 6.25;
+    const min = Math.max(0, 25 - expansion);
+    const max = Math.min(100, 75 + expansion);
+
+    return Number(
+        max - (position / (playerCount - 1)) * (max - min)
+    );
+}
+
+
 function processGames(games) {
     const playerStats = {};
     const corpStats = {};
@@ -9,7 +24,7 @@ function processGames(games) {
         const n = sortedGame.length;
 
         sortedGame.forEach((p, i) => {
-            const perf = n === 1 ? 100 : ((n - (i + 1)) / (n - 1)) * 100;
+            const perf = calculateBayesianRating(n, i);
 
             if (!playerStats[p.player]) {
                 playerStats[p.player] = { perf: [], wins: 0 };
@@ -27,7 +42,7 @@ function processGames(games) {
         });
     });
 
-    console.log("games processed");
+    console.log("Games processed");
     return { playerStats, corpStats };
 }
 
@@ -60,7 +75,7 @@ function buildPlayerStreaks(games) {
         streaks[player] = streak;
     });
 
-    console.log("player streak stats built");
+    console.log("Player streak stats built");
     return streaks;
 }
 
@@ -88,9 +103,9 @@ function buildCorporationStreaks(games) {
             }
         }
 
-        console.log("corp streak stats built");
         streaks[corp] = streak;
     });
+    console.log("Corp streak stats built");
 
     return streaks;
 }
@@ -110,10 +125,6 @@ function calculateRank(stats, streaks) {
         const rating =
             (avg * d.perf.length + PRIOR_RATING * PRIOR_GAMES) /
             (d.perf.length + PRIOR_GAMES);
-    
-        // const uncertantyrating =
-        //     (avg * d.perf.length + PRIOR_RATING * (filteredGames.length - d.perf.length)) /
-        //     (filteredGames.length);
 
         out.push({
             name,
@@ -124,7 +135,7 @@ function calculateRank(stats, streaks) {
         });
     });
 
-    console.log("calculated ranking");
+    console.log("Rank calculated");
     return out.sort((a, b) => b.rating - a.rating);
 }
 
@@ -134,10 +145,9 @@ function buildRankings(games) {
     const playerStreaks = buildPlayerStreaks(games);
     const corpStreaks = buildCorporationStreaks(games);
 
+    console.log("Ranking built");
     return {
         players: calculateRank(playerStats, playerStreaks),
         corps: calculateRank(corpStats, corpStreaks)
     };
 }
-
-console.log("rating.js lastet");
