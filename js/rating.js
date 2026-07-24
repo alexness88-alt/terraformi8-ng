@@ -1,6 +1,6 @@
 // -------------------- STATS --------------------
 
-function calculateBayesianRating(playerCount, position) {
+function calculateRatingPoints(playerCount, position) {
     if (playerCount === 1) {
         return 100;
     }
@@ -24,7 +24,7 @@ function processGames(games) {
         const n = sortedGame.length;
 
         sortedGame.forEach((p, i) => {
-            const perf = calculateBayesianRating(n, i);
+            const perf = calculateRatingPoints(n, i);
 
             if (!playerStats[p.player]) {
                 playerStats[p.player] = { perf: [], wins: 0 };

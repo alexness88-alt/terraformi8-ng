@@ -55,7 +55,7 @@ function buildList(id, data) {
         const n = sortedGame.length;
 
         sortedGame.forEach((p, i) => {
-            p.rating = calculateBayesianRating(n, i);
+            p.rating = calculateRatingPoints(n, i);
         });
 
         // Finn høyeste poengsum
