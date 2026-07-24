@@ -338,11 +338,11 @@ function setupYearFilter() {
             ? selected
             : "all";
 
+    console.log(`Filter setup complete`);
     select.onchange = () => {
         localStorage.setItem(SELECTED_YEAR_KEY, select.value);
         applyYearFilter();
     };
-    console.log(`Filter setup complete`);
 }
 
 function applyYearFilter() {
@@ -356,6 +356,6 @@ function applyYearFilter() {
             return d && String(d.getFullYear()) === selectedYear;
         });
 
-    renderPage();
     console.log(`Games filtered by year`);
+    renderPage();
 }
